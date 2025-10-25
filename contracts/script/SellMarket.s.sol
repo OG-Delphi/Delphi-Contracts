@@ -3,23 +3,24 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
 import "../src/BinaryMarketCPMM.sol";
+import "../src/OutcomeToken.sol";
 import "../test/mocks/MockERC20.sol";
 
-/// @title TradeMarket
-/// @notice Script to execute a test trade on a market
-contract TradeMarket is Script {
+/// @title SellMarket
+/// @notice Script to test selling outcome tokens
+contract SellMarket is Script {
     uint8 constant YES = 0;
     uint8 constant NO = 1;
 
     function run() external {
         // Get parameters from environment
         bytes32 marketId = vm.envBytes32("MARKET_ID");
-        bool buyYes = vm.envOr("BUY_YES", true); // Default to buying YES
-        uint256 amount = vm.envOr("TRADE_AMOUNT", uint256(100 * 10**6)); // Default 100 USDC
+        bool sellYes = vm.envOr("SELL_YES", true);
+        uint256 amount = vm.envOr("SELL_AMOUNT", uint256(50 * 10**6)); // Default 50 tokens
 
-        console.log("Trading on market:");
+        console.log("Selling tokens on market:");
         console.log("Market ID:", vm.toString(marketId));
-        console.log("Buying:", buyYes ? "YES" : "NO");
+        console.log("Selling:", sellYes ? "YES" : "NO");
         console.log("Amount:", amount);
 
         // Load deployment addresses
@@ -28,43 +29,48 @@ contract TradeMarket is Script {
         string memory json = vm.readFile(deploymentFile);
 
         address cpmmAddr = vm.parseJsonAddress(json, ".contracts.BinaryMarketCPMM");
-        BinaryMarketCPMM cpmm = BinaryMarketCPMM(cpmmAddr);
+        address outcomeTokenAddr = vm.parseJsonAddress(json, ".contracts.OutcomeToken");
         
-        MockERC20 usdc = MockERC20(address(cpmm.collateral()));
+        BinaryMarketCPMM cpmm = BinaryMarketCPMM(cpmmAddr);
+        OutcomeToken outcomeToken = OutcomeToken(outcomeTokenAddr);
 
         // Get deployer key
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
 
-        vm.startBroadcast(deployerPrivateKey);
-
-        // Approve CPMM to take USDC
-        console.log("Approving USDC...");
-        usdc.approve(cpmmAddr, amount);
-
         // Get current price before trade
         uint256 priceBeforeYes = cpmm.getYesPrice(marketId);
         console.log("Current YES price:", priceBeforeYes);
 
-        // For first trade on new market with 50/50 prices, expect roughly:
-        // - Fee takes 1.5%, so 98.5% goes to CPMM
-        // - CPMM formula reduces output further due to constant product
-        // - Rough estimate: ~90% of amount after fees for small trades
-        uint8 outcome = buyYes ? YES : NO;
-        uint256 minOut = (amount * 75) / 100; // Conservative: accept 25% total slippage
+        // Check token balance
+        uint8 outcome = sellYes ? YES : NO;
+        uint256 tokenId = outcomeToken.encodeTokenId(marketId, outcome);
+        uint256 balance = outcomeToken.balanceOf(deployer, tokenId);
+        console.log("Token balance:", balance);
         
-        console.log("Min shares (25% slippage):", minOut);
-        
-        uint256 sharesOut = cpmm.buy(marketId, outcome, amount, minOut);
+        require(balance >= amount, "Insufficient token balance");
 
-        console.log("\nTrade executed!");
-        console.log("Shares received:", sharesOut);
+        vm.startBroadcast(deployerPrivateKey);
+
+        // Approve CPMM to burn tokens
+        console.log("Approving outcome tokens...");
+        outcomeToken.setApprovalForAll(cpmmAddr, true);
+
+        // Calculate minimum output (accept 25% slippage)
+        uint256 minOut = (amount * 75) / 100;
+        console.log("Min collateral (25% slippage):", minOut);
+
+        // Execute sell
+        uint256 collateralOut = cpmm.sell(marketId, outcome, amount, minOut);
+
+        console.log("\nSell executed!");
+        console.log("Collateral received:", collateralOut);
 
         // Get market state after trade
         BinaryMarketCPMM.Market memory market = cpmm.getMarket(marketId);
         uint256 priceAfterYes = cpmm.getYesPrice(marketId);
         
-        console.log("\nMarket after trade:");
+        console.log("\nMarket after sell:");
         console.log("  YES Reserves:", market.yesReserve);
         console.log("  NO Reserves:", market.noReserve);
         console.log("  YES Price:", priceAfterYes);

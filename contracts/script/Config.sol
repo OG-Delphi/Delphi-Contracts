@@ -18,15 +18,15 @@ library Config {
     /// @notice Get configuration for Base Sepolia
     function getBaseSepoliaConfig() internal pure returns (NetworkConfig memory) {
         return NetworkConfig({
-            // Base Sepolia USDC (you'll need to deploy a mock or use testnet USDC)
+            // Base Sepolia USDC (using mock for testing)
             usdc: address(0), // Will deploy MockUSDC if zero
             // Chainlink on Base Sepolia
-            linkToken: address(0), // Base Sepolia LINK (check Chainlink docs)
-            automationRegistrar: address(0), // Base Sepolia Automation Registrar
-            // Price feeds on Base Sepolia (check Chainlink docs for real addresses)
-            btcUsdFeed: address(0), // Will use mock if zero
-            ethUsdFeed: address(0), // Will use mock if zero
-            solUsdFeed: address(0), // Will use mock if zero
+            linkToken: 0xE4aB69C077896252FAFBD49EFD26B5D171A32410,
+            automationRegistrar: 0xf28D56F3A707E25B71Ce529a21AF388751E1CF2A,
+            // Official Chainlink Price Feeds on Base Sepolia
+            btcUsdFeed: 0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298,
+            ethUsdFeed: 0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1,
+            solUsdFeed: 0xb113F5A928BCfF189C998ab20d753a47F9dE5A61, // Using LINK/USD as alternative
             deployerPrivateKey: 0 // Set via environment variable
         });
     }

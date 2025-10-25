@@ -69,6 +69,8 @@ contract Deploy is Script {
             btcFeed = new MockChainlinkFeed(8, "BTC/USD");
             btcFeed.setLatestRoundData(70000e8, block.timestamp, block.timestamp);
             console.log("Mock BTC/USD feed deployed at:", address(btcFeed));
+        } else {
+            console.log("Using Chainlink BTC/USD feed at:", config.btcUsdFeed);
         }
 
         if (config.ethUsdFeed == address(0)) {
@@ -76,6 +78,8 @@ contract Deploy is Script {
             ethFeed = new MockChainlinkFeed(8, "ETH/USD");
             ethFeed.setLatestRoundData(3500e8, block.timestamp, block.timestamp);
             console.log("Mock ETH/USD feed deployed at:", address(ethFeed));
+        } else {
+            console.log("Using Chainlink ETH/USD feed at:", config.ethUsdFeed);
         }
 
         if (config.solUsdFeed == address(0)) {
@@ -83,6 +87,8 @@ contract Deploy is Script {
             solFeed = new MockChainlinkFeed(8, "SOL/USD");
             solFeed.setLatestRoundData(150e8, block.timestamp, block.timestamp);
             console.log("Mock SOL/USD feed deployed at:", address(solFeed));
+        } else {
+            console.log("Using Chainlink LINK/USD feed at:", config.solUsdFeed);
         }
 
         // Step 3: Deploy OracleRouter

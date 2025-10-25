@@ -15,7 +15,7 @@ contract CreateMarket is Script {
         string memory json = vm.readFile(deploymentFile);
 
         address factoryAddr = vm.parseJsonAddress(json, ".contracts.MarketFactory");
-        address usdcAddr = vm.parseJsonAddress(json, ".infrastructure.USDC");
+        address usdcAddr = vm.parseJsonAddress(json, ".infrastructure.MockUSDC");
 
         console.log("Creating market on chain:", chainId);
         console.log("Factory:", factoryAddr);
@@ -29,11 +29,6 @@ contract CreateMarket is Script {
 
         MarketFactory factory = MarketFactory(factoryAddr);
         MockERC20 usdc = MockERC20(usdcAddr);
-
-        // Approve factory to take creation fee
-        uint256 creationFee = factory.creationFee();
-        console.log("Approving creation fee:", creationFee);
-        usdc.approve(factoryAddr, creationFee);
 
         // Get whitelisted feeds
         address[] memory feeds = factory.getWhitelistedFeeds();
@@ -54,8 +49,13 @@ contract CreateMarket is Script {
         console.log("  Strike price:", vm.toString(strikePrice));
         console.log("  Initial liquidity:", initialLiquidity);
 
-        // Approve initial liquidity
-        usdc.approve(factoryAddr, initialLiquidity);
+        // Approve total amount needed (creation fee + 2x initial liquidity for YES/NO pools)
+        uint256 creationFee = factory.creationFee();
+        uint256 totalApproval = creationFee + (initialLiquidity * 2);
+        console.log("Creation fee:", creationFee);
+        console.log("Liquidity (2x):", initialLiquidity * 2);
+        console.log("Total approval:", totalApproval);
+        usdc.approve(factoryAddr, totalApproval);
         
         bytes32 marketId = factory.createPriceAboveAtTime(
             feed,

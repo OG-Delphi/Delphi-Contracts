@@ -6,6 +6,8 @@
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-blue)](https://soliditylang.org/)
 [![Tests](https://img.shields.io/badge/Tests-53%2F53%20passing-brightgreen)]()
 
+> **🚀 LIVE TEST:** End-to-end test running on Base Sepolia! [View Status →](LIVE_TEST_STATUS.md)
+
 ---
 
 ## 📄 What is this?

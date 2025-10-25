@@ -1,0 +1,37 @@
+{
+  "chainId": 84532,
+  "network": "Base Sepolia",
+  "timestamp": 1761420278,
+  "deployer": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+  "contracts": {
+    "OutcomeToken": "0x71F863f93bccb2db3D1F01FC2480e5066150DB0e",
+    "OracleRouter": "0xD17a88AAecCB84D0072B6227973Ac43C20f9De03",
+    "BinaryMarketCPMM": "0x840Ab73b0950959d9b12c890B228EA30E7cbb653",
+    "MarketScheduler": "0x695fFc186eAcC7C4CD56441c0ce31b820f767E10",
+    "MarketFactory": "0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7"
+  },
+  "infrastructure": {
+    "MockUSDC": "0xc67D7b15E5B8A67C3B74e2f1E594F2157D1C0974",
+    "BTC_USD_Feed": "0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298",
+    "ETH_USD_Feed": "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+    "LINK_USD_Feed": "0xb113F5A928BCfF189C998ab20d753a47F9dE5A61"
+  },
+  "chainlink": {
+    "LINK_Token": "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+    "Automation_Registrar": "0xf28D56F3A707E25B71Ce529a21AF388751E1CF2A",
+    "Automation_Registry": "0x91D4a4C3D448c7f3CB477332B1c7D420a5810aC3"
+  },
+  "verification": {
+    "OutcomeToken": "https://sepolia.basescan.org/address/0x71F863f93bccb2db3D1F01FC2480e5066150DB0e",
+    "OracleRouter": "https://sepolia.basescan.org/address/0xD17a88AAecCB84D0072B6227973Ac43C20f9De03",
+    "BinaryMarketCPMM": "https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653",
+    "MarketScheduler": "https://sepolia.basescan.org/address/0x695fFc186eAcC7C4CD56441c0ce31b820f767E10",
+    "MarketFactory": "https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7"
+  },
+  "notes": {
+    "priceFeeds": "Using official Chainlink price feeds on Base Sepolia",
+    "automation": "Ready for Chainlink Automation registration",
+    "usdc": "Mock USDC for testnet (not official)",
+    "nextSteps": "1. Register Chainlink Automation, 2. Fund with LINK, 3. Test end-to-end resolution"
+  }
+}
