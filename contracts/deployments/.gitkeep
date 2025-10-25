@@ -1,0 +1,3 @@
+# Deployment artifacts will be stored here
+# Each network gets its own JSON file: 84532.json (Base Sepolia), 8453.json (Base Mainnet)
+

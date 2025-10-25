@@ -1,0 +1,52 @@
+# Internal planning documents (not for public)
+internal-docs/
+
+# Environment variables
+.env
+*.env
+!env.example
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Foundry / Hardhat
+cache/
+out/
+artifacts/
+typechain/
+typechain-types/
+lib/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+coverage.json
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Project status
+PROJECT_STATUS.md
