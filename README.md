@@ -5,8 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-blue)](https://soliditylang.org/)
 [![Tests](https://img.shields.io/badge/Tests-53%2F53%20passing-brightgreen)]()
+[![Deployed](https://img.shields.io/badge/Base%20Sepolia-Deployed-success)](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7)
 
-> **🚀 LIVE TEST:** End-to-end test running on Base Sepolia! [View Status →](LIVE_TEST_STATUS.md)
+> **🚀 LIVE NOW:** End-to-end test running on Base Sepolia with real Chainlink feeds and automation!  
+> **Automated resolution in ~68 minutes** • [Check Status](contracts/script/check_market.sh)
 
 ---
 
@@ -31,15 +33,17 @@
 
 Located in `/contracts`:
 
-| Contract | Description | Status |
-|----------|-------------|--------|
-| **MarketFactory** | Creates markets from templates, enforces whitelisted feeds | ✅ Complete + Tested |
-| **BinaryMarketCPMM** | Constant product AMM (x*y=k) for YES/NO tokens | ✅ Complete + Tested |
-| **MarketScheduler** | Single Chainlink Automation upkeep for all resolutions | ✅ Complete + Tested |
-| **OracleRouter** | Queries Chainlink feeds at specific timestamps | ✅ Complete + Tested |
-| **OutcomeToken** | ERC-1155 tokens for market positions (YES/NO shares) | ✅ Complete + Tested |
+| Contract | Description | Status | Address (Base Sepolia) |
+|----------|-------------|--------|------------------------|
+| **MarketFactory** | Creates markets from templates, enforces whitelisted feeds | ✅ Deployed | [`0xbaCB6...`](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7) |
+| **BinaryMarketCPMM** | Constant product AMM (x*y=k) for YES/NO tokens | ✅ Deployed | [`0x840Ab7...`](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653) |
+| **MarketScheduler** | Single Chainlink Automation upkeep for all resolutions | ✅ Deployed | [`0x695fFc...`](https://sepolia.basescan.org/address/0x695fFc186eAcC7C4CD56441c0ce31b820f767E10) |
+| **OracleRouter** | Queries Chainlink feeds at specific timestamps | ✅ Deployed | [`0xD17a88...`](https://sepolia.basescan.org/address/0xD17a88AAecCB84D0072B6227973Ac43C20f9De03) |
+| **OutcomeToken** | ERC-1155 tokens for market positions (YES/NO shares) | ✅ Deployed | [`0x71F863...`](https://sepolia.basescan.org/address/0x71F863f93bccb2db3D1F01FC2480e5066150DB0e) |
 
-**Test Coverage**: 53/53 tests passing ✅
+**Test Coverage**: 53/53 tests passing ✅  
+**Testnet**: Live on Base Sepolia with real Chainlink feeds 🚀  
+**Live Test**: [View market on BaseScan](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653#events)
 
 ### Frontend (Chrome MV3 Extension)
 
@@ -53,6 +57,16 @@ _Coming Soon: GraphQL API for markets, trades, positions_
 
 ## 🚀 Quick Start
 
+### 🔍 Check Any Market
+
+Explore markets on Base Sepolia:
+```bash
+cd contracts
+./script/check_market.sh <MARKET_ID>
+```
+
+This tool shows you BaseScan links, contract info, and commands to interact with any market!
+
 ### Prerequisites
 
 - [Foundry](https://getfoundry.sh) (for smart contracts)
@@ -61,8 +75,8 @@ _Coming Soon: GraphQL API for markets, trades, positions_
 ### Clone & Install
 
 ```bash
-git clone https://github.com/yourname/delphi.git
-cd delphi/contracts
+git clone https://github.com/OG_Delphi/Delphi-Smart-Contracts.git
+cd Delphi-Smart-Contracts/contracts
 forge install
 ```
 
@@ -78,21 +92,30 @@ All 53 tests should pass:
 - OracleRouter: 19/19 ✅
 - BinaryMarketCPMM: 21/21 ✅
 
-### Deploy to Testnet
+### Interact with Live Testnet
+
+Already deployed on Base Sepolia! Try these:
 
 ```bash
-# Configure environment
-cp env.example .env
-# Edit .env with your DEPLOYER_PRIVATE_KEY and BASE_SEPOLIA_RPC_URL
+cd contracts
+source .env
 
-# Deploy
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url $BASE_SEPOLIA_RPC_URL \
-  --broadcast \
-  --verify
+# Check any market's status
+./script/check_market.sh 0x1ad47bbfd7825699f4e2337b9243a1a02d6830e3295a78006006dc24ad47af8a
+
+# Create your own market
+forge script script/CreateMarket.s.sol:CreateMarket \
+  --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast
+
+# Trade on a market
+export MARKET_ID=<market_id>
+export BUY_YES=true
+export BUY_AMOUNT=50000000  # 50 USDC
+forge script script/TradeMarket.s.sol:TradeMarket \
+  --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast
 ```
 
-See [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) for detailed instructions.
+See [contracts/script/README.md](contracts/script/README.md) for all available scripts.
 
 ---
 
@@ -179,13 +202,20 @@ See [contracts/ACCESS_CONTROL.md](contracts/ACCESS_CONTROL.md) for complete secu
 
 ### For Developers
 
-- [contracts/README.md](contracts/README.md) - Smart contract overview
-- [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) - Deployment guide
-- [contracts/ACCESS_CONTROL.md](contracts/ACCESS_CONTROL.md) - Governance & security
+- **[contracts/README.md](contracts/README.md)** - Smart contract overview & quick start
+- **[contracts/script/README.md](contracts/script/README.md)** - Complete script guide
+- **[contracts/ACCESS_CONTROL.md](contracts/ACCESS_CONTROL.md)** - Governance & security
+- **[contracts/deployments/84532.json](contracts/deployments/84532.json)** - Base Sepolia addresses
 
 ### For Users
 
-_Coming Soon: Extension user guide_
+- **[Check Any Market](contracts/script/check_market.sh)** - Universal market info tool
+- _Extension user guide coming soon_
+
+### Internal Documentation
+
+- **[internal-docs/](internal-docs/)** - Detailed technical documentation, test reports, and development notes
+- **[internal-docs/PROJECT_STATUS.md](internal-docs/PROJECT_STATUS.md)** - Current project status and roadmap
 
 ### Architecture Diagrams
 
@@ -240,11 +270,14 @@ _Coming Soon: Extension user guide_
 - [x] Deployment scripts
 - [x] Documentation
 
-### 🔄 Phase 2: Testnet Deployment (In Progress)
-- [ ] Deploy to Base Sepolia
-- [ ] Create test markets
-- [ ] Register Chainlink Automation upkeep
-- [ ] Verify automated resolution
+### 🔄 Phase 2: Testnet Deployment (90% Complete)
+- [x] Deploy to Base Sepolia
+- [x] Integrate real Chainlink price feeds (BTC, ETH, LINK)
+- [x] Create test markets
+- [x] Execute realistic trading simulation
+- [x] Register Chainlink Automation upkeep
+- [ ] Verify automated resolution (in progress - 68 min)
+- [ ] Complete end-to-end validation
 
 ### ⏳ Phase 3: Frontend (Next)
 - [ ] Chrome MV3 extension scaffold
@@ -319,8 +352,18 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 🔗 Links
 
-- **Contracts**: Base L2 (mainnet deployment pending)
-- **Docs**: [contracts/README.md](contracts/README.md)
+### Live on Base Sepolia
+- **Contracts**: [View on BaseScan](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7)
+- **Live Market**: [Check events](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653#events)
+- **Chainlink Automation**: [Monitor upkeep](https://automation.chain.link)
+
+### Documentation
+- **Smart Contracts**: [contracts/README.md](contracts/README.md)
+- **Script Guide**: [contracts/script/README.md](contracts/script/README.md)
+- **Project Status**: [internal-docs/PROJECT_STATUS.md](internal-docs/PROJECT_STATUS.md)
+
+### Community
+- **GitHub**: [OG_Delphi/Delphi-Smart-Contracts](https://github.com/OG_Delphi/Delphi-Smart-Contracts)
 - **Twitter**: _Coming Soon_
 - **Discord**: _Coming Soon_
 
@@ -330,9 +373,11 @@ This project is licensed under the [MIT License](LICENSE).
 
 **This software is provided "as is" without warranties.**
 
-- Smart contracts are **not yet audited** - do not use in production with real funds
+- Smart contracts are **not yet audited** - currently on testnet only
+- Testnet markets use **test tokens** (MockUSDC) with no real value
 - Prediction markets may be **regulated in your jurisdiction** - consult a lawyer
 - **You are responsible** for compliance with local laws
+- Do not use in production with real funds until audited
 
 ---
 
@@ -344,7 +389,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ### Report a Vulnerability
 
-If you discover a security issue, please email: [security@yourproject.com](mailto:security@yourproject.com)
+If you discover a security issue, please email: [ogdelphi@pm.me](mailto:ogdelphi@pm.me)
 
 **Do not** open a public GitHub issue for security vulnerabilities.
 
