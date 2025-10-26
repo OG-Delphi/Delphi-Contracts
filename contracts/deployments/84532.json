@@ -1,37 +1,84 @@
 {
   "chainId": 84532,
   "network": "Base Sepolia",
-  "timestamp": 1761420278,
+  "timestamp": 1761449588,
+  "deploymentDate": "October 26, 2025",
   "deployer": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+  "version": "v2.0.0",
   "contracts": {
-    "OutcomeToken": "0x71F863f93bccb2db3D1F01FC2480e5066150DB0e",
-    "OracleRouter": "0xD17a88AAecCB84D0072B6227973Ac43C20f9De03",
-    "BinaryMarketCPMM": "0x840Ab73b0950959d9b12c890B228EA30E7cbb653",
-    "MarketScheduler": "0x695fFc186eAcC7C4CD56441c0ce31b820f767E10",
-    "MarketFactory": "0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7"
+    "OutcomeToken": "0xB07a4D72511329C14bC5d9d4221c1676023888EA",
+    "OracleRouter": "0x619d98DA22a5BFeAA7174c8504D41dCF3A9D3d72",
+    "BinaryMarketCPMM": "0xDDEd4B385156fD34549a273c3538E1DE49B84708",
+    "MarketScheduler": "0x6F86F655fE3165Cd9717C66FA46aEc6ba25206D4",
+    "MarketFactory": "0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6"
   },
   "infrastructure": {
-    "MockUSDC": "0xc67D7b15E5B8A67C3B74e2f1E594F2157D1C0974",
+    "MockUSDC": "0xfbC9aFAb339Fb97E35e56310614AF82717371A01",
     "BTC_USD_Feed": "0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298",
     "ETH_USD_Feed": "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
-    "LINK_USD_Feed": "0xb113F5A928BCfF189C998ab20d753a47F9dE5A61"
+    "SOL_USD_Feed": "0xb113F5A928BCfF189C998ab20d753a47F9dE5A61"
+  },
+  "governance": {
+    "factoryOwner": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+    "cpmmOwner": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+    "schedulerOwner": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+    "feeTreasury": "0x18290793A6725D905672D0d12172C3Ff6724D9D7",
+    "ownershipPattern": "Ownable2Step (all contracts)",
+    "pendingOwnerTransfer": false
   },
   "chainlink": {
     "LINK_Token": "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
     "Automation_Registrar": "0xf28D56F3A707E25B71Ce529a21AF388751E1CF2A",
-    "Automation_Registry": "0x91D4a4C3D448c7f3CB477332B1c7D420a5810aC3"
+    "Automation_Registry": "0x91D4a4C3D448c7f3CB477332B1c7D420a5810aC3",
+    "upkeepRegistered": false,
+    "forwarderAddress": null,
+    "upkeepId": null
   },
   "verification": {
-    "OutcomeToken": "https://sepolia.basescan.org/address/0x71F863f93bccb2db3D1F01FC2480e5066150DB0e",
-    "OracleRouter": "https://sepolia.basescan.org/address/0xD17a88AAecCB84D0072B6227973Ac43C20f9De03",
-    "BinaryMarketCPMM": "https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653",
-    "MarketScheduler": "https://sepolia.basescan.org/address/0x695fFc186eAcC7C4CD56441c0ce31b820f767E10",
-    "MarketFactory": "https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7"
+    "OutcomeToken": "https://sepolia.basescan.org/address/0xB07a4D72511329C14bC5d9d4221c1676023888EA",
+    "OracleRouter": "https://sepolia.basescan.org/address/0x619d98DA22a5BFeAA7174c8504D41dCF3A9D3d72",
+    "BinaryMarketCPMM": "https://sepolia.basescan.org/address/0xDDEd4B385156fD34549a273c3538E1DE49B84708",
+    "MarketScheduler": "https://sepolia.basescan.org/address/0x6F86F655fE3165Cd9717C66FA46aEc6ba25206D4",
+    "MarketFactory": "https://sepolia.basescan.org/address/0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6",
+    "MockUSDC": "https://sepolia.basescan.org/address/0xfbC9aFAb339Fb97E35e56310614AF82717371A01",
+    "allVerified": true
+  },
+  "features": {
+    "scalableTimeBuckets": true,
+    "automatedCleanup": true,
+    "cleanupEnabled": false,
+    "cleanupMinAgeDays": 7,
+    "cleanupBatchSize": 10,
+    "emergencyPause": true,
+    "tokenRecovery": true,
+    "batchOperations": true,
+    "comprehensiveViews": true
   },
   "notes": {
+    "deployment": "Enhanced v2.0.0 with Ownable2Step, time-bucket scalability, and automated cleanup",
     "priceFeeds": "Using official Chainlink price feeds on Base Sepolia",
-    "automation": "Ready for Chainlink Automation registration",
-    "usdc": "Mock USDC for testnet (not official)",
-    "nextSteps": "1. Register Chainlink Automation, 2. Fund with LINK, 3. Test end-to-end resolution"
+    "usdc": "Mock USDC for testnet (not official USDC)",
+    "automation": "Requires Chainlink Automation upkeep registration",
+    "forwarder": "marketScheduler address must be updated to Chainlink Forwarder after upkeep registration",
+    "scalability": "Designed for 10K+ users, 150+ markets/day",
+    "cleanup": "Automated cleanup disabled by default; enable via setCleanupConfig()",
+    "governance": "All contracts support two-step ownership transfer to DAO multisig"
+  },
+  "nextSteps": [
+    "1. Register Chainlink Automation upkeep for MarketScheduler",
+    "2. Fund upkeep with LINK",
+    "3. Update CPMM.marketScheduler to Forwarder address",
+    "4. Create test markets to validate flow",
+    "5. Enable automated cleanup: scheduler.setCleanupConfig(true, 7, 10)",
+    "6. Test market resolution and cleanup automation",
+    "7. Monitor gas costs and adjust cleanup parameters"
+  ],
+  "previousDeployment": {
+    "version": "v1.0.0",
+    "timestamp": 1761420278,
+    "BinaryMarketCPMM": "0x840Ab73b0950959d9b12c890B228EA30E7cbb653",
+    "MarketScheduler": "0x695fFc186eAcC7C4CD56441c0ce31b820f767E10",
+    "MarketFactory": "0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7",
+    "reason": "Constructor breaking changes for Ownable2Step pattern"
   }
 }

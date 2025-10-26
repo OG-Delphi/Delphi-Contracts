@@ -18,13 +18,13 @@ Delphi allows anyone to create and trade on binary prediction markets for any pr
 
 | Contract | Description | Address (Base Sepolia) |
 |----------|-------------|------------------------|
-| **MarketFactory** | Create new prediction markets | `0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7` |
-| **BinaryMarketCPMM** | Core AMM for trading | `0x840Ab73b0950959d9b12c890B228EA30E7cbb653` |
-| **OutcomeToken** | ERC-1155 for YES/NO tokens | `0x71F863f93bccb2db3D1F01FC2480e5066150DB0e` |
-| **OracleRouter** | Chainlink oracle integration | `0xD17a88AAecCB84D0072B6227973Ac43C20f9De03` |
-| **MarketScheduler** | Automated market resolution | `0x695fFc186eAcC7C4CD56441c0ce31b820f767E10` |
+| **MarketFactory** | Create new prediction markets | `0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6` |
+| **BinaryMarketCPMM** | Core AMM for trading | `0xDDEd4B385156fD34549a273c3538E1DE49B84708` |
+| **OutcomeToken** | ERC-1155 for YES/NO tokens | `0xB07a4D72511329C14bC5d9d4221c1676023888EA` |
+| **OracleRouter** | Chainlink oracle integration | `0x619d98DA22a5BFeAA7174c8504D41dCF3A9D3d72` |
+| **MarketScheduler** | Automated market resolution | `0x6F86F655fE3165Cd9717C66FA46aEc6ba25206D4` |
 
-**✨ Now using real Chainlink price feeds!** [View on BaseScan](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7)
+**✨ v2.0.0 Enhanced** - Ownable2Step governance, time-bucket scalability, automated cleanup! [View on BaseScan](https://sepolia.basescan.org/address/0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6)
 
 ## 🚀 Quick Start
 

@@ -24,16 +24,27 @@ contract MarketFactory is Ownable2Step {
 
     // Market creation fee (paid in USDC, funds LINK pool)
     uint256 public creationFee = 10 * 10**6; // 10 USDC (6 decimals)
+    uint256 public constant MIN_CREATION_FEE = 0; // Can be free
+    uint256 public constant MAX_CREATION_FEE = 1000 * 10**6; // Max 1000 USDC
 
     // Fee treasury (for LINK funding, protocol costs)
     address public feeTreasury;
 
     // Whitelisted Chainlink feeds (feed address => allowed)
     mapping(address => bool) public whitelistedFeeds;
+    mapping(address => string) public feedDescriptions; // Store feed descriptions
     address[] private whitelistedFeedsList; // Array to track whitelisted feeds
 
     // Nonce for generating unique market IDs
-    uint256 private nonce;
+    uint256 public nonce; // Changed to public for verification
+
+    // Market tracking
+    uint256 public totalMarketsCreated;
+    mapping(address => bytes32[]) public marketsByCreator; // Track markets per creator
+    mapping(bytes32 => address) public marketCreator; // Market ID to creator
+
+    // Emergency controls
+    bool public paused;
 
     // Events
     event MarketCreatedAndRegistered(
@@ -48,6 +59,9 @@ contract MarketFactory is Ownable2Step {
     event FeedDelisted(address indexed feed);
     event CreationFeeUpdated(uint256 newFee);
     event FeeTreasuryUpdated(address newTreasury);
+    event Paused(address account);
+    event Unpaused(address account);
+    event TokensRecovered(address indexed token, address indexed to, uint256 amount);
 
     // Errors
     error InvalidTemplate();
@@ -57,6 +71,14 @@ contract MarketFactory is Ownable2Step {
     error InvalidLiquidity();
     error InsufficientCreationFee();
     error ZeroAddress();
+    error ContractPaused();
+    error CreationFeeTooHigh();
+    error InvalidParams();
+
+    modifier whenNotPaused() {
+        if (paused) revert ContractPaused();
+        _;
+    }
 
     constructor(address _cpmm, address _scheduler, address _collateral, address _feeTreasury, address initialOwner)
         Ownable(initialOwner)
@@ -86,7 +108,7 @@ contract MarketFactory is Ownable2Step {
         uint16 feeBps,
         uint16 creatorFeeBps,
         uint128 initialLiquidity
-    ) external returns (bytes32 marketId) {
+    ) external whenNotPaused returns (bytes32 marketId) {
         // Validation
         if (!whitelistedFeeds[feed]) revert FeedNotWhitelisted();
         if (strikePrice <= 0) revert InvalidStrikePrice();
@@ -133,6 +155,11 @@ contract MarketFactory is Ownable2Step {
         // Register with scheduler for automated resolution
         scheduler.registerMarket(marketId, settleTs, PRICE_ABOVE_AT_TIME);
 
+        // Track market creation
+        totalMarketsCreated++;
+        marketsByCreator[msg.sender].push(marketId);
+        marketCreator[marketId] = msg.sender;
+
         emit MarketCreatedAndRegistered(marketId, msg.sender, PRICE_ABOVE_AT_TIME, settleTs, initialLiquidity);
     }
 
@@ -143,6 +170,7 @@ contract MarketFactory is Ownable2Step {
     function whitelistFeed(address feed, string calldata description) external onlyOwner {
         if (!whitelistedFeeds[feed]) {
             whitelistedFeeds[feed] = true;
+            feedDescriptions[feed] = description;
             whitelistedFeedsList.push(feed);
             emit FeedWhitelisted(feed, description);
         }
@@ -160,6 +188,7 @@ contract MarketFactory is Ownable2Step {
     /// @param newFee The new creation fee in USDC (with 6 decimals)
     /// @dev Only callable by owner (deployer → DAO)
     function updateCreationFee(uint256 newFee) external onlyOwner {
+        if (newFee > MAX_CREATION_FEE) revert CreationFeeTooHigh();
         creationFee = newFee;
         emit CreationFeeUpdated(newFee);
     }
@@ -171,6 +200,57 @@ contract MarketFactory is Ownable2Step {
         if (newTreasury == address(0)) revert ZeroAddress();
         feeTreasury = newTreasury;
         emit FeeTreasuryUpdated(newTreasury);
+    }
+
+    /// @notice Pause market creation (emergency use)
+    /// @dev Only callable by owner
+    function pause() external onlyOwner {
+        paused = true;
+        emit Paused(msg.sender);
+    }
+
+    /// @notice Unpause market creation
+    /// @dev Only callable by owner
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpaused(msg.sender);
+    }
+
+    /// @notice Batch whitelist multiple feeds
+    /// @param feeds Array of feed addresses to whitelist
+    /// @param descriptions Array of descriptions matching the feeds
+    /// @dev Only callable by owner
+    function batchWhitelistFeeds(address[] calldata feeds, string[] calldata descriptions) external onlyOwner {
+        if (feeds.length != descriptions.length) revert InvalidParams();
+        
+        for (uint256 i = 0; i < feeds.length; i++) {
+            if (!whitelistedFeeds[feeds[i]]) {
+                whitelistedFeeds[feeds[i]] = true;
+                feedDescriptions[feeds[i]] = descriptions[i];
+                whitelistedFeedsList.push(feeds[i]);
+                emit FeedWhitelisted(feeds[i], descriptions[i]);
+            }
+        }
+    }
+
+    /// @notice Recover ERC20 tokens sent to this contract by mistake
+    /// @param token The token address to recover (use address(0) for ETH)
+    /// @param to Address to send recovered tokens to
+    /// @param amount Amount to recover
+    /// @dev Only callable by owner. Cannot recover USDC that belongs to pending liquidity
+    function recoverTokens(address token, address to, uint256 amount) external onlyOwner {
+        if (to == address(0)) revert ZeroAddress();
+        
+        if (token == address(0)) {
+            // Recover ETH
+            (bool success,) = to.call{value: amount}("");
+            require(success, "ETH transfer failed");
+        } else {
+            // Recover ERC20
+            IERC20(token).safeTransfer(to, amount);
+        }
+        
+        emit TokensRecovered(token, to, amount);
     }
 
     /// @notice Preview a market creation (calculate market ID without creating)
@@ -205,5 +285,108 @@ contract MarketFactory is Ownable2Step {
     function getWhitelistedFeeds() external view returns (address[] memory) {
         return whitelistedFeedsList;
     }
+
+    /// @notice Get count of whitelisted feeds
+    /// @return count Number of feeds in whitelist
+    function getWhitelistedFeedCount() external view returns (uint256 count) {
+        return whitelistedFeedsList.length;
+    }
+
+    /// @notice Get markets created by a specific user
+    /// @param creator Address of the market creator
+    /// @return marketIds Array of market IDs created by the user
+    function getMarketsByCreator(address creator) external view returns (bytes32[] memory marketIds) {
+        return marketsByCreator[creator];
+    }
+
+    /// @notice Get count of markets created by a specific user
+    /// @param creator Address of the market creator
+    /// @return count Number of markets created by the user
+    function getCreatorMarketCount(address creator) external view returns (uint256 count) {
+        return marketsByCreator[creator].length;
+    }
+
+    /// @notice Validate market creation parameters before attempting
+    /// @param feed Feed address
+    /// @param strikePrice Strike price
+    /// @param settleTs Settlement timestamp
+    /// @param initialLiquidity Initial liquidity amount
+    /// @return valid True if parameters are valid
+    /// @return reason Error reason if invalid
+    function validateMarketParams(
+        address feed,
+        int256 strikePrice,
+        uint64 settleTs,
+        uint128 initialLiquidity
+    ) external view returns (bool valid, string memory reason) {
+        if (paused) {
+            return (false, "Contract is paused");
+        }
+        if (!whitelistedFeeds[feed]) {
+            return (false, "Feed not whitelisted");
+        }
+        if (strikePrice <= 0) {
+            return (false, "Invalid strike price");
+        }
+        if (settleTs <= block.timestamp + 1 hours) {
+            return (false, "Settlement time too soon");
+        }
+        if (settleTs > block.timestamp + 365 days) {
+            return (false, "Settlement time too far");
+        }
+        if (initialLiquidity < 100 * 10**6) {
+            return (false, "Insufficient liquidity");
+        }
+        return (true, "");
+    }
+
+    /// @notice Get detailed feed information
+    /// @param feed Feed address
+    /// @return isWhitelisted Whether feed is whitelisted
+    /// @return description Feed description
+    function getFeedInfo(address feed) 
+        external 
+        view 
+        returns (bool isWhitelisted, string memory description) 
+    {
+        return (whitelistedFeeds[feed], feedDescriptions[feed]);
+    }
+
+    /// @notice Get contract statistics
+    /// @return totalMarkets Total markets created
+    /// @return currentCreationFee Current creation fee
+    /// @return isPaused Whether contract is paused
+    /// @return whitelistedFeedCount Number of whitelisted feeds
+    function getContractStats() 
+        external 
+        view 
+        returns (
+            uint256 totalMarkets,
+            uint256 currentCreationFee,
+            bool isPaused,
+            uint256 whitelistedFeedCount
+        ) 
+    {
+        return (
+            totalMarketsCreated,
+            creationFee,
+            paused,
+            whitelistedFeedsList.length
+        );
+    }
+
+    /// @notice Check if market creation is currently allowed
+    /// @return allowed True if markets can be created
+    /// @return reason Reason if not allowed
+    function isMarketCreationAllowed() external view returns (bool allowed, string memory reason) {
+        if (paused) {
+            return (false, "Contract is paused");
+        }
+        if (whitelistedFeedsList.length == 0) {
+            return (false, "No feeds whitelisted");
+        }
+        return (true, "");
+    }
 }
+
 

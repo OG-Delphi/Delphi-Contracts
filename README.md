@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-blue)](https://soliditylang.org/)
 [![Tests](https://img.shields.io/badge/Tests-53%2F53%20passing-brightgreen)]()
-[![Deployed](https://img.shields.io/badge/Base%20Sepolia-Deployed-success)](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7)
+[![Deployed](https://img.shields.io/badge/Base%20Sepolia-Deployed-success)](https://sepolia.basescan.org/address/0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6)
 
 > **🚀 LIVE NOW:** End-to-end test running on Base Sepolia with real Chainlink feeds and automation!  
 > **Automated resolution in ~68 minutes** • [Check Status](contracts/script/check_market.sh)
@@ -35,15 +35,15 @@ Located in `/contracts`:
 
 | Contract | Description | Status | Address (Base Sepolia) |
 |----------|-------------|--------|------------------------|
-| **MarketFactory** | Creates markets from templates, enforces whitelisted feeds | ✅ Deployed | [`0xbaCB6...`](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7) |
-| **BinaryMarketCPMM** | Constant product AMM (x*y=k) for YES/NO tokens | ✅ Deployed | [`0x840Ab7...`](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653) |
-| **MarketScheduler** | Single Chainlink Automation upkeep for all resolutions | ✅ Deployed | [`0x695fFc...`](https://sepolia.basescan.org/address/0x695fFc186eAcC7C4CD56441c0ce31b820f767E10) |
-| **OracleRouter** | Queries Chainlink feeds at specific timestamps | ✅ Deployed | [`0xD17a88...`](https://sepolia.basescan.org/address/0xD17a88AAecCB84D0072B6227973Ac43C20f9De03) |
-| **OutcomeToken** | ERC-1155 tokens for market positions (YES/NO shares) | ✅ Deployed | [`0x71F863...`](https://sepolia.basescan.org/address/0x71F863f93bccb2db3D1F01FC2480e5066150DB0e) |
+| **MarketFactory** | Creates markets from templates, enforces whitelisted feeds | ✅ Deployed | [`0xaB2A83...`](https://sepolia.basescan.org/address/0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6) |
+| **BinaryMarketCPMM** | Constant product AMM (x*y=k) for YES/NO tokens | ✅ Deployed | [`0xDDEd4B...`](https://sepolia.basescan.org/address/0xDDEd4B385156fD34549a273c3538E1DE49B84708) |
+| **MarketScheduler** | Single Chainlink Automation upkeep for all resolutions | ✅ Deployed | [`0x6F86F6...`](https://sepolia.basescan.org/address/0x6F86F655fE3165Cd9717C66FA46aEc6ba25206D4) |
+| **OracleRouter** | Queries Chainlink feeds at specific timestamps | ✅ Deployed | [`0x619d98...`](https://sepolia.basescan.org/address/0x619d98DA22a5BFeAA7174c8504D41dCF3A9D3d72) |
+| **OutcomeToken** | ERC-1155 tokens for market positions (YES/NO shares) | ✅ Deployed | [`0xB07a4D...`](https://sepolia.basescan.org/address/0xB07a4D72511329C14bC5d9d4221c1676023888EA) |
 
 **Test Coverage**: 53/53 tests passing ✅  
 **Testnet**: Live on Base Sepolia with real Chainlink feeds 🚀  
-**Live Test**: [View market on BaseScan](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653#events)
+**Version**: v2.0.0 with Ownable2Step, time-bucket scalability, and automated cleanup
 
 ### Frontend (Chrome MV3 Extension)
 
@@ -353,8 +353,8 @@ This project is licensed under the [MIT License](LICENSE).
 ## 🔗 Links
 
 ### Live on Base Sepolia
-- **Contracts**: [View on BaseScan](https://sepolia.basescan.org/address/0xbaCB64f7Fcc27914B3F52E164BCfDD38bd0847e7)
-- **Live Market**: [Check events](https://sepolia.basescan.org/address/0x840Ab73b0950959d9b12c890B228EA30E7cbb653#events)
+- **MarketFactory**: [View on BaseScan](https://sepolia.basescan.org/address/0xaB2A8324A582F14Df6B4f2EF222f894812EFCAB6)
+- **BinaryMarketCPMM**: [View on BaseScan](https://sepolia.basescan.org/address/0xDDEd4B385156fD34549a273c3538E1DE49B84708)
 - **Chainlink Automation**: [Monitor upkeep](https://automation.chain.link)
 
 ### Documentation

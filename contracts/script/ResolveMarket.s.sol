@@ -31,7 +31,7 @@ contract ResolveMarket is Script {
 
         // Get market details
         BinaryMarketCPMM.Market memory market = cpmm.getMarket(marketId);
-        console.log("Market settle time:", market.settleTimestamp);
+        console.log("Market settle time:", market.settleTs);
         console.log("Current time:", block.timestamp);
         console.log("Market status:", uint256(market.status));
 

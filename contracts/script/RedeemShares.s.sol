@@ -40,7 +40,7 @@ contract RedeemShares is Script {
         console.log("  Settlement Time:", market.settleTs);
         console.log("  Current Time:", block.timestamp);
 
-        if (market.status != BinaryMarketCPMM.MarketStatus.RESOLVED) {
+        if (market.status != BinaryMarketCPMM.MarketStatus.Resolved) {
             console.log("\n[ERROR] Market not yet resolved!");
             console.log("Market status:", uint8(market.status));
             console.log("0=ACTIVE, 1=LOCKED, 2=RESOLVED");

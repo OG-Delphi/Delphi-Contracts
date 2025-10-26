@@ -114,14 +114,19 @@ contract Deploy is Script {
         cpmm = new BinaryMarketCPMM(
             usdcAddress,
             address(outcomeToken),
-            deployer // Temporary scheduler
+            deployer, // Temporary scheduler
+            deployer  // Initial owner (can transfer to DAO via Ownable2Step)
         );
         console.log("BinaryMarketCPMM deployed at:", address(cpmm));
         require(address(cpmm) == predictedCPMM, "CPMM address mismatch!");
 
         // Step 6: Deploy MarketScheduler
         console.log("\nDeploying MarketScheduler...");
-        scheduler = new MarketScheduler(address(cpmm), address(oracleRouter));
+        scheduler = new MarketScheduler(
+            address(cpmm),
+            address(oracleRouter),
+            deployer  // Initial owner (can transfer to DAO via Ownable2Step)
+        );
         console.log("MarketScheduler deployed at:", address(scheduler));
 
         // Step 7: Deploy MarketFactory
@@ -177,6 +182,8 @@ contract Deploy is Script {
         console.log("  MarketFactory:", address(factory));
         console.log("\nGovernance:");
         console.log("  Factory Owner:", factory.owner());
+        console.log("  CPMM Owner:", cpmm.owner());
+        console.log("  Scheduler Owner:", scheduler.owner());
         console.log("  CPMM.marketFactory:", cpmm.marketFactory());
         console.log("  Scheduler.marketFactory:", scheduler.marketFactory());
         console.log("\nInfrastructure:");

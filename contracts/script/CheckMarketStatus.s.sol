@@ -29,10 +29,15 @@ contract CheckMarketStatus is Script {
         // Check market
         BinaryMarketCPMM.Market memory market = cpmm.getMarket(marketId);
         uint256 yesPrice = cpmm.getYesPrice(marketId);
+        
+        // Decode market params to get feed and strike price
+        bytes memory params = cpmm.getMarketParams(marketId);
+        (address feed, int256 strikePrice) = abi.decode(params, (address, int256));
 
         console.log("\n[MARKET INFO]");
         console.log("  Status:", uint8(market.status), "(0=ACTIVE, 1=LOCKED, 2=RESOLVED)");
         console.log("  Settlement Time:", market.settleTs);
+        console.log("  Strike Price:", uint256(strikePrice) / 1e8);
         
         if (block.timestamp < market.settleTs) {
             uint256 timeRemaining = market.settleTs - block.timestamp;
@@ -50,19 +55,19 @@ contract CheckMarketStatus is Script {
         console.log("  NO Reserve:", market.noReserve);
         console.log("  Total Volume:", market.totalVolume);
 
-        if (market.status == BinaryMarketCPMM.MarketStatus.RESOLVED) {
+        if (market.status == BinaryMarketCPMM.MarketStatus.Resolved) {
             console.log("\n[RESOLUTION]");
             console.log("  Winning Outcome:", market.winningOutcome, "(0=YES, 1=NO)");
             
-            // Get current oracle price
-            (bytes32 templateId,) = cpmm.getMarketCondition(marketId);
-            (int256 currentPrice,) = oracleRouter.getPrice(templateId);
-            console.log("  Final BTC Price:", uint256(currentPrice) / 1e8);
+            // Get final oracle price at settlement time
+            OracleRouter.RoundData memory roundData = oracleRouter.getRoundAtOrBefore(feed, market.settleTs);
+            console.log("  Final Price:", uint256(roundData.answer) / 1e8);
+            console.log("  Final Price Time:", roundData.updatedAt);
         } else {
             console.log("\n[CURRENT ORACLE PRICE]");
-            (bytes32 templateId,) = cpmm.getMarketCondition(marketId);
-            (int256 currentPrice,) = oracleRouter.getPrice(templateId);
-            console.log("  BTC Price:", uint256(currentPrice) / 1e8);
+            OracleRouter.RoundData memory roundData = oracleRouter.getRoundAtOrBefore(feed, block.timestamp);
+            console.log("  Current Price:", uint256(roundData.answer) / 1e8);
+            console.log("  Price Time:", roundData.updatedAt);
         }
 
         console.log("\n==========================================");

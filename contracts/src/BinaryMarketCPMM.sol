@@ -3,12 +3,15 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./OutcomeToken.sol";
 
 /// @title BinaryMarketCPMM
 /// @notice Constant Product Market Maker for binary prediction markets
 /// @dev Implements x*y=k AMM for YES/NO outcome tokens with USDC collateral
-contract BinaryMarketCPMM {
+/// @dev Uses Ownable2Step for secure governance transfer (deployer → DAO)
+contract BinaryMarketCPMM is Ownable2Step {
     using SafeERC20 for IERC20;
 
     // Market states
@@ -44,8 +47,9 @@ contract BinaryMarketCPMM {
     // State variables
     IERC20 public immutable collateral; // USDC
     OutcomeToken public immutable outcomeToken;
-    address public immutable marketScheduler;
+    address public marketScheduler; // Chainlink Automation Forwarder address
     address public marketFactory; // Only this address can create markets
+    uint256 public totalReserves; // Total USDC locked in all market reserves
 
     mapping(bytes32 => Market) public markets;
     mapping(bytes32 => bytes) public marketParams; // Template-specific parameters
@@ -95,6 +99,10 @@ contract BinaryMarketCPMM {
         uint256 payout
     );
 
+    event MarketSchedulerUpdated(address indexed oldScheduler, address indexed newScheduler);
+
+    event FeesClaimed(address indexed owner, address indexed recipient, uint256 amount);
+
     // Errors
     error MarketNotActive();
     error MarketNotResolved();
@@ -106,6 +114,8 @@ contract BinaryMarketCPMM {
     error InvalidMarketParams();
     error MarketAlreadyExists();
     error MarketNotLocked();
+    error InvalidAddress();
+    error NoFeesToClaim();
 
     modifier onlyScheduler() {
         if (msg.sender != marketScheduler) revert Unauthorized();
@@ -117,7 +127,9 @@ contract BinaryMarketCPMM {
         _;
     }
 
-    constructor(address _collateral, address _outcomeToken, address _marketScheduler) {
+    constructor(address _collateral, address _outcomeToken, address _marketScheduler, address initialOwner)
+        Ownable(initialOwner)
+    {
         collateral = IERC20(_collateral);
         outcomeToken = OutcomeToken(_outcomeToken);
         marketScheduler = _marketScheduler;
@@ -129,6 +141,34 @@ contract BinaryMarketCPMM {
     function setMarketFactory(address _marketFactory) external {
         if (marketFactory != address(0)) revert Unauthorized();
         marketFactory = _marketFactory;
+    }
+
+    /// @notice Update the market scheduler address (Chainlink Automation Forwarder)
+    /// @param _newScheduler Address of the new scheduler
+    /// @dev Only callable by owner, typically set to Chainlink Automation Forwarder
+    function setMarketScheduler(address _newScheduler) external onlyOwner {
+        if (_newScheduler == address(0)) revert InvalidAddress();
+        address oldScheduler = marketScheduler;
+        marketScheduler = _newScheduler;
+        emit MarketSchedulerUpdated(oldScheduler, _newScheduler);
+    }
+
+    /// @notice Claim accumulated protocol fees
+    /// @param recipient Address to receive the fees
+    /// @dev Only callable by owner. Claims fees = contract balance - total reserves
+    function claimFees(address recipient) external onlyOwner {
+        if (recipient == address(0)) revert InvalidAddress();
+        
+        // Calculate claimable fees: contract balance minus locked reserves
+        uint256 contractBalance = collateral.balanceOf(address(this));
+        if (contractBalance <= totalReserves) revert NoFeesToClaim();
+        
+        uint256 claimableAmount = contractBalance - totalReserves;
+        
+        // Transfer fees to recipient
+        collateral.safeTransfer(recipient, claimableAmount);
+        
+        emit FeesClaimed(owner(), recipient, claimableAmount);
     }
 
     /// @notice Create a new prediction market
@@ -177,6 +217,9 @@ contract BinaryMarketCPMM {
 
         // Transfer collateral from factory (factory receives it from creator first)
         collateral.safeTransferFrom(msg.sender, address(this), initialLiquidity * 2);
+
+        // Track reserves
+        totalReserves += initialLiquidity * 2;
 
         // Mint initial LP tokens (YES and NO) to creator
         uint256 yesTokenId = outcomeToken.encodeTokenId(marketId, YES);
@@ -350,6 +393,9 @@ contract BinaryMarketCPMM {
         // Burn winning shares
         outcomeToken.burn(msg.sender, winningTokenId, winningShares);
 
+        // Decrease total reserves
+        totalReserves -= payout;
+
         // Transfer USDC payout
         collateral.safeTransfer(msg.sender, payout);
 
@@ -368,6 +414,134 @@ contract BinaryMarketCPMM {
     /// @return params The encoded parameters
     function getMarketParams(bytes32 marketId) external view returns (bytes memory params) {
         return marketParams[marketId];
+    }
+
+    /// @notice Get claimable fees available to admin
+    /// @return claimable Amount of USDC fees available to claim
+    function getClaimableFees() external view returns (uint256 claimable) {
+        uint256 contractBalance = collateral.balanceOf(address(this));
+        if (contractBalance <= totalReserves) {
+            return 0;
+        }
+        return contractBalance - totalReserves;
+    }
+
+    /// @notice Get current price for NO outcome in basis points
+    /// @param marketId The market to query
+    /// @return price Price of NO in BPS (5000 = 50%)
+    function getNoPrice(bytes32 marketId) external view returns (uint256 price) {
+        Market memory market = markets[marketId];
+        if (market.yesReserve == 0 && market.noReserve == 0) return 5000; // 50% default
+
+        price = (uint256(market.noReserve) * BPS_BASE) /
+            (uint256(market.yesReserve) + uint256(market.noReserve));
+    }
+
+    /// @notice Get both YES and NO reserves for a market
+    /// @param marketId The market to query
+    /// @return yesReserve YES token reserve
+    /// @return noReserve NO token reserve
+    function getMarketReserves(bytes32 marketId) external view returns (uint128 yesReserve, uint128 noReserve) {
+        Market memory market = markets[marketId];
+        return (market.yesReserve, market.noReserve);
+    }
+
+    /// @notice Calculate shares received for a buy (preview)
+    /// @param marketId The market to query
+    /// @param outcome The outcome to buy (0=YES, 1=NO)
+    /// @param collateralIn Amount of USDC to spend
+    /// @return sharesOut Expected shares to receive (after fees)
+    /// @return priceImpact Price impact in BPS
+    function calculateBuyShares(bytes32 marketId, uint8 outcome, uint256 collateralIn)
+        external
+        view
+        returns (uint256 sharesOut, uint256 priceImpact)
+    {
+        Market memory market = markets[marketId];
+        if (outcome > 1) return (0, 0);
+
+        // Calculate fee
+        uint256 feeAmount = (collateralIn * market.feeBps) / BPS_BASE;
+        uint256 collateralAfterFee = collateralIn - feeAmount;
+
+        // Calculate shares using CPMM formula
+        uint128 reserveIn = (outcome == YES) ? market.yesReserve : market.noReserve;
+        uint128 reserveOut = (outcome == YES) ? market.noReserve : market.yesReserve;
+
+        uint256 k = uint256(reserveIn) * uint256(reserveOut);
+        uint256 newReserveIn = uint256(reserveIn) + collateralAfterFee;
+        uint256 newReserveOut = k / newReserveIn;
+        sharesOut = uint256(reserveOut) - newReserveOut;
+
+        // Calculate price impact
+        uint256 oldPrice = (uint256(market.yesReserve) * BPS_BASE) /
+            (uint256(market.yesReserve) + uint256(market.noReserve));
+        
+        uint128 newYesReserve = (outcome == YES) ? uint128(newReserveIn) : uint128(newReserveOut);
+        uint128 newNoReserve = (outcome == YES) ? uint128(newReserveOut) : uint128(newReserveIn);
+        
+        uint256 newPrice = (uint256(newYesReserve) * BPS_BASE) /
+            (uint256(newYesReserve) + uint256(newNoReserve));
+        
+        priceImpact = (outcome == YES) ? (newPrice > oldPrice ? newPrice - oldPrice : 0) :
+                                          (oldPrice > newPrice ? oldPrice - newPrice : 0);
+    }
+
+    /// @notice Calculate collateral received for a sell (preview)
+    /// @param marketId The market to query
+    /// @param outcome The outcome to sell (0=YES, 1=NO)
+    /// @param sharesIn Amount of shares to sell
+    /// @return collateralOut Expected USDC to receive (after fees)
+    function calculateSellReturn(bytes32 marketId, uint8 outcome, uint256 sharesIn)
+        external
+        view
+        returns (uint256 collateralOut)
+    {
+        Market memory market = markets[marketId];
+        if (outcome > 1) return 0;
+
+        // Calculate collateral using CPMM formula
+        uint128 reserveIn = (outcome == YES) ? market.noReserve : market.yesReserve;
+        uint128 reserveOut = (outcome == YES) ? market.yesReserve : market.noReserve;
+
+        uint256 k = uint256(reserveIn) * uint256(reserveOut);
+        uint256 newReserveOut = uint256(reserveOut) + sharesIn;
+        uint256 newReserveIn = k / newReserveOut;
+        uint256 collateralGross = uint256(reserveIn) - newReserveIn;
+
+        // Calculate fee
+        uint256 feeAmount = (collateralGross * market.feeBps) / BPS_BASE;
+        collateralOut = collateralGross - feeAmount;
+    }
+
+    /// @notice Check if a market is actively trading
+    /// @param marketId The market to query
+    /// @return active True if market status is Active
+    function isMarketActive(bytes32 marketId) external view returns (bool active) {
+        return markets[marketId].status == MarketStatus.Active;
+    }
+
+    /// @notice Get total USDC balance in contract
+    /// @return balance Total USDC held by contract
+    function getTotalContractBalance() external view returns (uint256 balance) {
+        return collateral.balanceOf(address(this));
+    }
+
+    /// @notice Get user's shares for both outcomes
+    /// @param marketId The market to query
+    /// @param user Address of the user
+    /// @return yesShares User's YES token balance
+    /// @return noShares User's NO token balance
+    function getUserShares(bytes32 marketId, address user)
+        external
+        view
+        returns (uint256 yesShares, uint256 noShares)
+    {
+        uint256 yesTokenId = outcomeToken.encodeTokenId(marketId, YES);
+        uint256 noTokenId = outcomeToken.encodeTokenId(marketId, NO);
+        
+        yesShares = outcomeToken.balanceOf(user, yesTokenId);
+        noShares = outcomeToken.balanceOf(user, noTokenId);
     }
 }
 

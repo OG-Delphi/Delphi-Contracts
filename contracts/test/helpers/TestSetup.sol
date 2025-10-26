@@ -20,7 +20,12 @@ abstract contract TestSetup is Test {
         outcomeToken = new OutcomeToken(predictedCPMM);
         
         // Deploy CPMM (must be next deployment to match prediction)
-        cpmm = new BinaryMarketCPMM(usdc, address(outcomeToken), scheduler);
+        cpmm = new BinaryMarketCPMM(
+            usdc,
+            address(outcomeToken),
+            scheduler,
+            address(this) // Test contract as initial owner
+        );
         
         require(address(cpmm) == predictedCPMM, "Address prediction failed");
         
